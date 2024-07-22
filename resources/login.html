@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login & Register</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            width: 400px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        .header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .form-group button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .form-group button:hover {
+            background-color: #0056b3;
+        }
+        .form-group span {
+            display: block;
+            text-align: center;
+            margin-top: 10px;
+            cursor: pointer;
+            color: #007bff;
+        }
+        .message {
+            text-align: center;
+            margin-top: 10px;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="login-container">
+        <div class="header">Welcome To Use Chatbot!</div>
+        <div class="form-group">
+            <label for="login-username">Username</label>
+            <input type="text" id="login-username" placeholder="Enter your username">
+        </div>
+        <div class="form-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" placeholder="Enter your password">
+        </div>
+        <div class="form-group">
+            <button id="login-button">Login</button>
+        </div>
+        <span id="show-register">Don't have an account? Register</span>
+        <div class="message" id="login-message"></div>
+    </div>
+
+    <div class="container" id="register-container" style="display: none;">
+        <div class="header">Enter Registration Information!</div>
+        <div class="form-group">
+            <label for="register-username">Username</label>
+            <input type="text" id="register-username" placeholder="Choose a username">
+        </div>
+        <div class="form-group">
+            <label for="register-password">Password</label>
+            <input type="password" id="register-password" placeholder="Choose a password">
+        </div>
+        <div class="form-group">
+            <button id="register-button">Register</button>
+        </div>
+        <span id="show-login">Already have an account? Login</span>
+        <div class="message" id="register-message"></div>
+    </div>
+
+    <script>
+        const loginContainer = document.getElementById('login-container');
+        const registerContainer = document.getElementById('register-container');
+        const showRegister = document.getElementById('show-register');
+        const showLogin = document.getElementById('show-login');
+
+        const loginButton = document.getElementById('login-button');
+        const registerButton = document.getElementById('register-button');
+
+        const loginMessage = document.getElementById('login-message');
+        const registerMessage = document.getElementById('register-message');
+
+        showRegister.addEventListener('click', () => {
+            loginContainer.style.display = 'none';
+            registerContainer.style.display = 'block';
+        });
+
+        showLogin.addEventListener('click', () => {
+            registerContainer.style.display = 'none';
+            loginContainer.style.display = 'block';
+        });
+
+        loginButton.addEventListener('click', () => {
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+
+            if (username && password) {
+                // loginMessage.textContent = 'Login successful!';
+                // loginMessage.style.color = 'green';
+                // window.location.href = 'index.html'; // Redirect to index.html
+                // Send login data to server
+                fetch(`${window.location.origin}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loginMessage.textContent = 'Login successful!';
+                        loginMessage.style.color = 'green';
+                        window.location.href = 'index.html'; // Redirect to index.html
+                    } else {
+                        loginMessage.textContent = data.message || 'Login failed!';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    loginMessage.textContent = `Error: ${error.message}`;
+                });
+            } else {
+                loginMessage.textContent = 'Please fill in all fields';
+            }
+        });
+
+        registerButton.addEventListener('click', () => {
+            const username = document.getElementById('register-username').value.trim();
+            const password = document.getElementById('register-password').value.trim();
+
+            if (username && password) {
+                // Send registration data to server
+                fetch(`${window.location.origin}/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        registerMessage.textContent = 'Registration successful!';
+                        registerMessage.style.color = 'green';
+                        window.location.href = 'login.html'; // Redirect to login.html
+                    } else {
+                        registerMessage.textContent = data.message || 'Registration failed!';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    registerMessage.textContent = `Error: ${error.message}`;
+                });
+            } else {
+                registerMessage.textContent = 'Please fill in all fields';
+            }
+        });
+    </script>
+</body>
+</html>

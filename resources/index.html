@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .chat-container {
+            width: 400px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+        }
+        .chat-header select {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: #fff;
+            color: #007bff;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .chat-messages {
+            height: 300px;
+            padding: 10px;
+            overflow-y: scroll;
+            border-bottom: 1px solid #ccc;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-input {
+            display: flex;
+            padding: 10px;
+        }
+        #message-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #send-button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+            margin-left: 10px;
+            border-radius: 4px;
+        }
+        #send-button:hover {
+            background-color: #0056b3;
+        }
+        .message-wrapper {
+            display: flex;
+            flex-direction: column;
+            margin: 5px 0;
+        }
+        .message-container {
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            border-radius: 4px;
+            max-width: 80%;
+        }
+        .message-sender {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .own-message-wrapper {
+            align-items: flex-end;
+        }
+        .server-message-wrapper {
+            align-items: flex-start;
+        }
+        .own-message-container {
+            background-color: #007bff;
+            color: #fff;
+            align-self: flex-end;
+        }
+        .server-message-container {
+            background-color: #f1f1f1;
+            color: #000;
+            align-self: flex-start;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <select id="chat-module" name="chat-module">
+                <option value="gpt-3.5-turbo">GPT-3.5</option>
+                <option value="gpt-4o">GPT-4o</option>
+                <option value="ERNIE-Speed-8K">文心一言</option>
+            </select>
+        </div>
+        <div class="chat-messages" id="chat-messages"></div>
+        <div class="chat-input">
+            <input type="text" id="message-input" placeholder="Type a message...">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+    <script>
+        const chatMessages = document.getElementById('chat-messages');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const chatModule = document.getElementById('chat-module');
+
+        // Function to append messages to the chat
+        function appendMessage(sender, message, isOwnMessage = false, messageId = null) {
+            const messageWrapper = document.createElement('div');
+            messageWrapper.classList.add('message-wrapper');
+            if (isOwnMessage) {
+                messageWrapper.classList.add('own-message-wrapper');
+            } else {
+                messageWrapper.classList.add('server-message-wrapper');
+            }
+
+            const senderElement = document.createElement('div');
+            senderElement.classList.add('message-sender');
+            senderElement.textContent = sender;
+
+            const messageContainer = document.createElement('div');
+            messageContainer.classList.add('message-container');
+            if (isOwnMessage) {
+                messageContainer.classList.add('own-message-container');
+            } else {
+                messageContainer.classList.add('server-message-container');
+            }
+
+            const messageElement = document.createElement('div');
+            messageElement.textContent = message;
+            if (messageId) {
+                messageElement.setAttribute('id', messageId);
+            }
+
+            messageContainer.appendChild(messageElement);
+            messageWrapper.appendChild(senderElement);
+            messageWrapper.appendChild(messageContainer);
+            chatMessages.appendChild(messageWrapper);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Function to update message
+        function updateMessage(messageId, newMessage) {
+            const messageElement = document.getElementById(messageId);
+            if (messageElement) {
+                messageElement.textContent = newMessage;
+            }
+        }
+
+        // Function to send message
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            const selectedModule = chatModule.value;
+            if (message) {
+                appendMessage('You', message, true);
+
+                // Generate a unique ID for the "thinking" message
+                const thinkingMessageId = `thinking-${Date.now()}`;
+                appendMessage('Bot', '正在思考中...', false, thinkingMessageId);
+
+                // Construct the request URL dynamically
+                const url = `${window.location.origin}/send-message`;
+
+                // Send the message to the server
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username: 'JohnDoe', message: message, model: selectedModule }) 
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.message && data.name) {
+                        const responseMessage = data.message;
+                        updateMessage(thinkingMessageId, responseMessage);
+                    } else {
+                        updateMessage(thinkingMessageId, "Unexpected response format");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    updateMessage(thinkingMessageId, `出错啦: ${error.message}`);
+                });
+
+                messageInput.value = '';
+            }
+        }
+
+        // Event listener for the send button
+        sendButton.addEventListener('click', sendMessage);
+
+        // Event listener for the enter key
+        messageInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
