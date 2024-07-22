@@ -12,11 +12,11 @@
 ## 页面展示
 
 ### 登录或注册页面
-![登录页面](resources/img_readme/登录界面.jpg)
+![登录页面](resources/img_readme/登录界面.png)
 - 用户可以在此页面输入用户名和密码进行登录。
 
 ### 注册页面
-![注册页面](resources/img_readme/注册页面.jpg)
+![注册页面](resources/img_readme/注册页面.png)
 - 新用户可以在此页面输入相关信息进行注册。
 
 ### 登录失败页面
